@@ -1,12 +1,13 @@
 package ru.smipealex;
 
 import javax.swing.*;
-import javax.swing.border.StrokeBorder;
 import java.awt.*;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.Line2D;
 import java.awt.geom.Point2D;
 import java.util.Date;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 public class Main {
@@ -18,19 +19,28 @@ public class Main {
         JFrame jFrame = getFrame();
         jFrame.add(new MyComponent());
 
-        new FrameUpdater(jFrame).start();
+        ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor();
+        executorService.scheduleWithFixedDelay(new FrameUpdater(jFrame), 0, 500, TimeUnit.MILLISECONDS);
     }
 
-    static class FrameUpdater extends Thread {
-        private final JFrame jFrame;
-
-        public FrameUpdater(JFrame jFrame){
-            this.jFrame = jFrame;
-        }
+    record FrameUpdater(JFrame jFrame) implements Runnable {
+        public static int seconds;
+        public static int minutes;
+        public static int hours;
 
         @Override
         public void run() {
-            while(jFrame.isVisible()){
+            long currentDate = new Date().getTime();
+
+            int globalSeconds = (int) TimeUnit.MILLISECONDS.toSeconds(currentDate);
+
+            if (seconds != globalSeconds % 60) {
+                seconds = globalSeconds % 60;
+
+                minutes = (int) (TimeUnit.MILLISECONDS.toMinutes(currentDate)) % 60;
+
+                hours = (int) (TimeUnit.MILLISECONDS.toHours(currentDate)) % 12;
+
                 jFrame.repaint();
             }
         }
@@ -41,19 +51,9 @@ public class Main {
 
         @Override
         protected void paintComponent(Graphics g) {
-            long currentDate = new Date().getTime();
-
-            int globalSeconds = (int) TimeUnit.MILLISECONDS.toSeconds(currentDate);
-            int globalMinutes = (int) TimeUnit.MILLISECONDS.toMinutes(currentDate);
-            int globalHours = (int) TimeUnit.MILLISECONDS.toHours(currentDate);
-
-            int seconds = globalSeconds % 60;
-            int minutes = globalMinutes % 60;
-            int hours = globalHours % 12;
-
-            float secondsRotation = 6 * seconds - 90;
-            float minutesRotation = 6 * minutes - 90;
-            float hoursRotation = 30 * hours;
+            float secondsRotation = 6 * FrameUpdater.seconds - 90;
+            float minutesRotation = 6 * FrameUpdater.minutes - 90;
+            float hoursRotation = 30 * FrameUpdater.hours;
 
             Graphics2D graphics2D = (Graphics2D) g;
             graphics2D.setFont(font);
