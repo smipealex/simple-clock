@@ -15,12 +15,18 @@ public class Main {
     public static final int WINDOW_WIDTH = 500;
     public static final int WINDOW_HEIGHT = 530;
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws InterruptedException {
         JFrame jFrame = getFrame();
         jFrame.add(new MyComponent());
 
         ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor();
-        executorService.scheduleWithFixedDelay(new FrameUpdater(jFrame), 0, 500, TimeUnit.MILLISECONDS);
+
+        long currentTime = new Date().getTime();
+        long different = TimeUnit.SECONDS.toMillis(TimeUnit.MILLISECONDS.toSeconds(currentTime) + 1) - currentTime;
+
+        Thread.sleep(different);
+
+        executorService.scheduleWithFixedDelay(new FrameUpdater(jFrame), 0, 1000, TimeUnit.MILLISECONDS);
     }
 
     record FrameUpdater(JFrame jFrame) implements Runnable {
